@@ -1,12 +1,25 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using BookTrack.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
+
+// Prefer a cross-platform SQLite connection when provided; otherwise fall back to SQL Server.
 builder.Services.AddDbContext<BookTrackContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("BookTrackContext") ?? throw new InvalidOperationException("Connection string 'BookTrackContext' not found.")));
+{
+    var sqliteConn = builder.Configuration.GetConnectionString("SqliteConnection");
+    if (!string.IsNullOrEmpty(sqliteConn))
+    {
+        options.UseSqlite(sqliteConn);
+    }
+    else
+    {
+        var sqlServerConn = builder.Configuration.GetConnectionString("BookTrackContext") ?? throw new InvalidOperationException("Connection string 'BookTrackContext' not found.");
+        options.UseSqlServer(sqlServerConn);
+    }
+});
 
 var app = builder.Build();
 
